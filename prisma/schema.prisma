@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("STUDENT") // STUDENT | ADMIN
+  createdAt    DateTime @default(now())
+  attempts     QuizAttempt[]
+  sessions     ChatSession[]
+  missed       MissedQuery[]
+}
+
+model Subject {
+  id            String        @id @default(cuid())
+  slug          String        @unique
+  name          String
+  description   String
+  icon          String        @default("book")
+  color         String        @default("#3b8c68")
+  order         Int           @default(0)
+  topics        Topic[]
+  questions     Question[]
+  attempts      QuizAttempt[]
+  papers        Paper[]
+  missedQueries MissedQuery[]
+  chatSessions  ChatSession[]
+}
+
+model Topic {
+  id          String     @id @default(cuid())
+  slug        String
+  subjectId   String
+  subject     Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  name        String
+  summary     String     @default("") // short study note
+  order       Int        @default(0)
+  questions   Question[]
+  @@unique([subjectId, slug])
+}
+
+model Question {
+  id            String  @id @default(cuid())
+  subjectId     String
+  subject       Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  topicId       String
+  topic         Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  text          String
+  type          String  @default("MCQ") // MCQ | SHORT | ESSAY
+  level         String  @default("NEWBIE") // NEWBIE | INTERMEDIATE | ADVANCED | PROFESSIONAL
+  options       String  @default("[]") // JSON array for MCQ
+  correctIndex  Int? // index of correct option for MCQ
+  answer        String  @default("") // model answer / explanation
+  marks         Int     @default(2)
+  year          String  @default("")
+  source        String  @default("original")
+}
+
+model Paper {
+  id          String   @id @default(cuid())
+  title       String
+  subjectId   String?
+  subject     Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  level       String   @default("")
+  year        String   @default("")
+  fileName    String
+  fileType    String   @default("")
+  content     String   @default("") // extracted raw text
+  status      String   @default("IMPORTED") // IMPORTED | REVIEWED
+  createdAt   DateTime @default(now())
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mode      String   @default("PRACTICE") // PRACTICE | EXAM
+  subjectId String?
+  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  topicId   String?
+  level     String   @default("")
+  score     Int      @default(0)
+  total     Int      @default(0)
+  durationSec Int    @default(0)
+  answers   String   @default("[]") // JSON
+  createdAt DateTime @default(now())
+}
+
+model ChatSession {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectId String?
+  subject   Subject?      @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  title     String        @default("New session")
+  createdAt DateTime      @default(now())
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      String // USER | AI
+  content   String
+  rating    Int? // 1..5
+  feedback  String  @default("")
+  missed    Boolean @default(false)
+  createdAt DateTime    @default(now())
+}
+
+model MissedQuery {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  query      String
+  subjectId  String?
+  subject    Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  status     String   @default("OPEN") // OPEN | RESOLVED | DISCARDED
+  createdAt  DateTime @default(now())
+  resolvedAt DateTime?
+}
