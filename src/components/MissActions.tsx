@@ -1,16 +1,9 @@
-"use client";
+import { api } from "@/lib/api";
 
-import { useRouter } from "next/navigation";
-
-export default function MissActions({ id, status }: { id: string; status: string }) {
-  const router = useRouter();
+export default function MissActions({ id, status, onUpdate }: { id: string; status: string; onUpdate: () => void }) {
   async function update(next: string) {
-    await fetch("/api/admin/misses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status: next }),
-    });
-    router.refresh();
+    await api.updateMiss(id, next);
+    onUpdate();
   }
   return (
     <div className="flex gap-2">

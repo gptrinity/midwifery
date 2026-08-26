@@ -1,10 +1,9 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import type { QuizQuestion } from "@/lib/quiz";
+import { useNavigate } from "react-router-dom";
+import type { QuizQuestion } from "@/lib/constants";
 import { LEVEL_LABEL, levelColor, typeLabel, formatDuration } from "@/lib/constants";
 import { Check, X, ChevronRight, Flag, Loader2 } from "lucide-react";
+import { api } from "@/lib/api";
 
 type Props = {
   questions: QuizQuestion[];
@@ -12,7 +11,7 @@ type Props = {
 };
 
 export default function QuizRunner({ questions, mode }: Props) {
-  const router = useRouter();
+  const router = useNavigate();
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<(number | string | null)[]>(Array(questions.length).fill(null));
   const [selfMarks, setSelfMarks] = useState<(boolean | null)[]>(Array(questions.length).fill(null));
@@ -44,7 +43,7 @@ export default function QuizRunner({ questions, mode }: Props) {
     return (
       <div className="card p-8 text-center text-slate-500">
         No questions match those filters. Try widening the topic or level.
-        <button className="btn-primary mt-4 mx-auto" onClick={() => router.push("/practice")}>
+        <button className="btn-primary mt-4 mx-auto" onClick={() => router("/practice")}>
           Back to setup
         </button>
       </div>
@@ -95,7 +94,6 @@ export default function QuizRunner({ questions, mode }: Props) {
     setSaving(true);
     const durationSec = Math.round((Date.now() - startRef.current) / 1000);
 
-    // Score MCQs automatically; short/essay use self-assessment (practice) or unmarked (exam)
     let score = 0;
     questions.forEach((qq, i) => {
       const a = answers[i];
@@ -106,20 +104,16 @@ export default function QuizRunner({ questions, mode }: Props) {
     const total = questions.length;
 
     try {
-      await fetch("/api/attempts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode,
-          subjectId: questions[0]?.subjectId || null,
-          level: q.level,
-          score,
-          total,
-          durationSec,
-          answers: JSON.stringify(
-            questions.map((qq, i) => ({ qid: qq.id, answer: answers[i], selfMark: selfMarks[i] }))
-          ),
-        }),
+      await api.saveAttempt({
+        mode,
+        subjectId: questions[0]?.subjectId || null,
+        level: q.level,
+        score,
+        total,
+        durationSec,
+        answers: JSON.stringify(
+          questions.map((qq, i) => ({ qid: qq.id, answer: answers[i], selfMark: selfMarks[i] }))
+        ),
       });
     } catch {
       // ignore save errors
@@ -128,7 +122,6 @@ export default function QuizRunner({ questions, mode }: Props) {
     setFinished(true);
   }
 
-  // ---- Results screen ----
   if (finished) {
     let score = 0;
     questions.forEach((qq, i) => {
@@ -164,13 +157,13 @@ export default function QuizRunner({ questions, mode }: Props) {
           </div>
           <div className="mt-4 text-lg font-semibold text-slate-700">Grade: {grade}</div>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <button className="btn-primary" onClick={() => router.push("/practice")}>
+            <button className="btn-primary" onClick={() => router("/practice")}>
               New practice session
             </button>
-            <button className="btn-secondary" onClick={() => router.push("/progress")}>
+            <button className="btn-secondary" onClick={() => router("/progress")}>
               View progress
             </button>
-            <button className="btn-secondary" onClick={() => router.push("/tutor")}>
+            <button className="btn-secondary" onClick={() => router("/tutor")}>
               Ask the AI tutor about mistakes
             </button>
           </div>
@@ -223,7 +216,6 @@ export default function QuizRunner({ questions, mode }: Props) {
     );
   }
 
-  // ---- Question screen ----
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-4 flex items-center justify-between">

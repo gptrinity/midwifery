@@ -1,7 +1,5 @@
-"use client";
-
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { LEVELS } from "@/lib/constants";
 
 type SubjectMeta = {
@@ -11,7 +9,7 @@ type SubjectMeta = {
 };
 
 export default function PracticeSetup({ subjects, mode }: { subjects: SubjectMeta[]; mode: "PRACTICE" | "EXAM" }) {
-  const router = useRouter();
+  const router = useNavigate();
   const [subject, setSubject] = useState("");
   const [topic, setTopic] = useState("");
   const [level, setLevel] = useState("");
@@ -19,7 +17,6 @@ export default function PracticeSetup({ subjects, mode }: { subjects: SubjectMet
   const [count, setCount] = useState(10);
 
   const topics = subject ? subjects.find((s) => s.id === subject)?.topics || [] : [];
-
   const isExam = mode === "EXAM";
 
   function start() {
@@ -29,7 +26,7 @@ export default function PracticeSetup({ subjects, mode }: { subjects: SubjectMet
     if (level) params.set("level", level);
     if (type) params.set("type", type);
     params.set("count", String(count));
-    router.push(`/${isExam ? "exams" : "practice"}/run?${params.toString()}`);
+    router(`/${isExam ? "exams" : "practice"}/run?${params.toString()}`);
   }
 
   return (

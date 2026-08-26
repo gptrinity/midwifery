@@ -1,7 +1,6 @@
-"use client";
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bot, Send, Plus, ThumbsUp, ThumbsDown, Loader2, User } from "lucide-react";
+import { api } from "@/lib/api";
 
 type Msg = {
   id: string;
@@ -20,7 +19,7 @@ type Session = {
 
 type Subject = { id: string; name: string };
 
-export default function TutorPage({ subjects, configured }: { subjects: Subject[]; configured: boolean }) {
+export default function TutorChat({ subjects, configured }: { subjects: Subject[]; configured: boolean }) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -41,8 +40,7 @@ export default function TutorPage({ subjects, configured }: { subjects: Subject[
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/tutor/sessions");
-        const data = await res.json();
+        const data = await api.tutorSessions();
         setSessions(data.sessions || []);
         if (data.sessions?.length) {
           setActiveId(data.sessions[0].id);
@@ -56,8 +54,7 @@ export default function TutorPage({ subjects, configured }: { subjects: Subject[
   useEffect(() => {
     if (!activeId) return;
     (async () => {
-      const res = await fetch(`/api/tutor/messages?session=${activeId}`);
-      const data = await res.json();
+      const data = await api.tutorMessages(activeId);
       setMessages(data.messages || []);
     })();
   }, [activeId]);
@@ -67,12 +64,7 @@ export default function TutorPage({ subjects, configured }: { subjects: Subject[
   }, [messages, streamText, scrollBottom]);
 
   async function newSession() {
-    const res = await fetch("/api/tutor/sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subjectId: subjectId || null }),
-    });
-    const data = await res.json();
+    const data = await api.createTutorSession(subjectId || undefined);
     setSessions((s) => [data.session, ...s]);
     setActiveId(data.session.id);
     setMessages([]);
@@ -86,7 +78,6 @@ export default function TutorPage({ subjects, configured }: { subjects: Subject[
     setStreaming(true);
     setStreamText("");
 
-    // local echo
     setMessages((m) => [...m, { id: `tmp-${Date.now()}`, role: "USER", content: text, rating: null, feedback: "" }]);
 
     try {
@@ -115,7 +106,6 @@ export default function TutorPage({ subjects, configured }: { subjects: Subject[
         setStreamText(acc);
       }
 
-      // extract session marker if present
       const marker = "__MW_SESSION__";
       const idx = acc.lastIndexOf(marker);
       let finalText = acc;
@@ -131,9 +121,7 @@ export default function TutorPage({ subjects, configured }: { subjects: Subject[
         { id: `ai-${Date.now()}`, role: "AI", content: finalText, rating: null, feedback: "" },
       ]);
 
-      // refresh sessions list (title may have been created)
-      const sr = await fetch("/api/tutor/sessions");
-      const sd = await sr.json();
+      const sd = await api.tutorSessions();
       setSessions(sd.sessions || []);
     } catch (e) {
       setError((e as Error).message);
@@ -143,21 +131,13 @@ export default function TutorPage({ subjects, configured }: { subjects: Subject[
   }
 
   async function rate(msgId: string, rating: number) {
-    await fetch("/api/tutor/rate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messageId: msgId, rating }),
-    });
+    await api.rateMessage(msgId, rating);
     setMessages((m) => m.map((x) => (x.id === msgId ? { ...x, rating } : x)));
     if (rating <= 2) setFeedbackOpen(msgId);
   }
 
   async function submitFeedback(msgId: string) {
-    await fetch("/api/tutor/rate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messageId: msgId, rating: 2, feedback: feedbackText }),
-    });
+    await api.rateMessage(msgId, 2, feedbackText);
     setMessages((m) => m.map((x) => (x.id === msgId ? { ...x, feedback: feedbackText } : x)));
     setFeedbackOpen(null);
     setFeedbackText("");
@@ -185,16 +165,13 @@ export default function TutorPage({ subjects, configured }: { subjects: Subject[
 
   return (
     <div className="flex h-[calc(100vh-190px)] min-h-[480px] gap-4">
-      {/* Sidebar */}
       <aside className="hidden w-72 shrink-0 flex-col gap-3 md:flex">
         <div className="card p-3">
           <label className="label">Tutor focus subject</label>
           <select className="input" value={subjectId} onChange={(e) => setSubjectId(e.target.value)}>
             <option value="">Everything (all subjects)</option>
             {subjects.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
+              <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
         </div>
@@ -218,7 +195,6 @@ export default function TutorPage({ subjects, configured }: { subjects: Subject[
         </div>
       </aside>
 
-      {/* Chat */}
       <div className="card flex flex-1 flex-col overflow-hidden">
         {error && (
           <div className="border-b border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">{error}</div>
@@ -250,9 +226,7 @@ export default function TutorPage({ subjects, configured }: { subjects: Subject[
               >
                 <div className={`prose-mw ${m.role === "USER" ? "text-sm text-white" : ""}`}>
                   {m.content.split("\n").map((line, i) => (
-                    <p key={i} className={m.role === "USER" ? "text-white" : ""}>
-                      {line}
-                    </p>
+                    <p key={i} className={m.role === "USER" ? "text-white" : ""}>{line}</p>
                   ))}
                 </div>
 

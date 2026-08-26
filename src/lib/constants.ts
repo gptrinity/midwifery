@@ -37,3 +37,16 @@ export function formatDuration(sec: number): string {
   const s = sec % 60;
   return `${m}m ${s}s`;
 }
+
+export type QuizQuestion = {
+  id: string;
+  subjectId: string;
+  text: string;
+  type: string;
+  level: string;
+  options: string[];
+  correctIndex: number | null;
+  answer: string;
+  marks: number;
+  subjectName: string;
+};

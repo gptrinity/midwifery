@@ -1,13 +1,10 @@
-"use client";
-
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Upload, Loader2, CheckCircle2 } from "lucide-react";
+import { api } from "@/lib/api";
 
 type Subject = { id: string; name: string };
 
 export default function ImportForm({ subjects }: { subjects: Subject[] }) {
-  const router = useRouter();
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState("");
   const [year, setYear] = useState("");
@@ -28,17 +25,15 @@ export default function ImportForm({ subjects }: { subjects: Subject[] }) {
     fd.append("year", year);
     fd.append("level", level);
     try {
-      const res = await fetch("/api/papers/import", { method: "POST", body: fd });
-      const data = await res.json();
-      setResult({ ok: res.ok, ...data });
-      if (res.ok) {
+      const data = await api.importPaper(fd);
+      setResult({ ...data, ok: true });
+      if (data.ok) {
         setTitle(""); setYear(""); setLevel(""); setFile(null);
       }
-    } catch {
-      setResult({ ok: false, error: "Network error" });
+    } catch (e) {
+      setResult({ ok: false, error: (e as Error).message });
     } finally {
       setLoading(false);
-      router.refresh();
     }
   }
 

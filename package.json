@@ -1,43 +1,56 @@
 {
   "name": "midwifery-ai",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "prisma generate && prisma db push && next build",
-    "start": "next start",
-    "lint": "next lint",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:client": "vite",
+    "dev:server": "tsx watch server/index.ts",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "start": "node dist-server/index.js",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "prisma:generate": "prisma generate"
   },
   "prisma": {
-    "seed": "node prisma/seed.js"
+    "schema": "prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
     "jose": "^6.2.9",
     "lucide-react": "^1.31.0",
     "mammoth": "^1.12.1",
-    "next": "^15.5.23",
+    "multer": "^1.4.5-lts.2",
     "openai": "^4.104.0",
     "pdf-parse": "^2.4.5",
-    "prisma": "^6.19.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-router-dom": "^7.6.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.2",
+    "@types/multer": "^1.4.12",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^4.5.2",
     "autoprefixer": "^10.5.4",
-    "eslint": "^9.39.5",
-    "eslint-config-next": "^16.3.1",
+    "concurrently": "^9.1.2",
     "postcss": "^8.5.26",
+    "prisma": "^6.19.3",
     "tailwindcss": "^3.4.19",
-    "typescript": "^5.9.3"
+    "tsx": "^4.19.4",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.5"
   }
 }

@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { Check, Eye, EyeOff } from "lucide-react";
 import { levelColor, LEVEL_LABEL, typeLabel } from "@/lib/constants";
