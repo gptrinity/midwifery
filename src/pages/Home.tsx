@@ -5,11 +5,13 @@ import { api } from "@/lib/api";
 
 export default function Home() {
   const [data, setData] = useState<any>(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    api.homePage().then(setData).catch(() => {});
+    api.homePage().then(setData).catch(() => setError(true));
   }, []);
 
+  if (error) return <div className="card p-10 text-center text-rose-600">Failed to load. Is the server running?</div>;
   if (!data) return <div className="card p-10 text-center text-slate-400">Loading…</div>;
 
   const features = [

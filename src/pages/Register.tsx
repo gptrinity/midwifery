@@ -18,8 +18,8 @@ export default function Register() {
       await api.register(name, email, password);
       router("/");
       window.location.reload();
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (e: any) {
+      setError(e?.message || "Network error. Please try again.");
     } finally {
       setLoading(false);
     }

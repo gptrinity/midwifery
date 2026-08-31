@@ -18,8 +18,8 @@ export default function Login() {
       await api.login(email, password);
       router(params.get("next") || "/");
       window.location.reload();
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (e: any) {
+      setError(e?.message || "Network error. Please try again.");
     } finally {
       setLoading(false);
     }
