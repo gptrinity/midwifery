@@ -6,6 +6,7 @@ import QuizRunner from "@/components/QuizRunner";
 export default function ExamRun() {
   const [params] = useSearchParams();
   const [questions, setQuestions] = useState<any[]>([]);
+  const [remaining, setRemaining] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const query: Record<string, string> = {};
@@ -19,12 +20,15 @@ export default function ExamRun() {
     if (level) query.level = level;
     if (type) query.type = type;
     query.count = count;
-    api.selectQuestions(query).then((d) => setQuestions(d.questions)).catch(() => {});
+    api.selectQuestions(query).then((d) => {
+      setQuestions(d.questions);
+      setRemaining(d.remaining);
+    }).catch(() => {});
   }, []);
 
   return (
     <div>
-      <QuizRunner questions={questions} mode="EXAM" />
+      <QuizRunner questions={questions} mode="EXAM" remaining={remaining} />
     </div>
   );
 }

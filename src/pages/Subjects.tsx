@@ -5,9 +5,10 @@ import { api } from "@/lib/api";
 
 export default function Subjects() {
   const [subjects, setSubjects] = useState<any[]>([]);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    api.subjects().then((d) => setSubjects(d.subjects)).catch(() => {});
+    api.subjects().then((d) => setSubjects(d.subjects)).catch(() => setError(true));
   }, []);
 
   return (
@@ -19,6 +20,8 @@ export default function Subjects() {
           newbie, intermediate, advanced and professional.
         </p>
       </div>
+
+      {error && <div className="card p-6 text-center text-rose-600">Failed to load subjects. Is the server running?</div>}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {subjects.map((s) => (

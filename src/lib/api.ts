@@ -1,7 +1,7 @@
 const API = "";
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API}${url}`, options);
+  const res = await fetch(`${API}${url}`, { credentials: "include", ...options });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || `Request failed: ${res.status}`);
@@ -41,7 +41,7 @@ export const api = {
 
   selectQuestions: (params: Record<string, string>) => {
     const qs = new URLSearchParams(params).toString();
-    return request<{ questions: any[] }>(`/api/questions/select?${qs}`);
+    return request<{ questions: any[]; remaining: number; total: number }>(`/api/questions/select?${qs}`);
   },
 
   saveAttempt: (data: any) =>
@@ -80,9 +80,29 @@ export const api = {
   },
 
   importPaper: (fd: FormData) =>
-    request<{ ok: true; paper: any; chars: number; preview: string }>("/api/papers/import", {
+    request<{ ok: true; paper: any; chars: number; preview: string; parsedCount: number; parsedQuestions: any[] }>("/api/papers/import", {
       method: "POST",
       body: fd,
+    }),
+
+  getPendingQuestions: (paperId: string) =>
+    request<{ questions: any[] }>(`/api/papers/${paperId}/pending`),
+
+  updatePendingQuestion: (paperId: string, index: number, data: any) =>
+    request<{ ok: true; question: any }>(`/api/papers/${paperId}/pending/${index}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+
+  deletePendingQuestion: (paperId: string, index: number) =>
+    request<{ ok: true }>(`/api/papers/${paperId}/pending/${index}`, {
+      method: "DELETE",
+    }),
+
+  commitPaper: (paperId: string) =>
+    request<{ ok: true; created: number }>(`/api/papers/${paperId}/commit`, {
+      method: "POST",
     }),
 
   adminStats: () =>
@@ -99,5 +119,5 @@ export const api = {
     }),
 
   homePage: () =>
-    request<{ subjectCount: number; questionCount: number; user: any; recentQuestions: any[] }>("/api/home"),
+    request<{ subjectCount: number; questionCount: number; user: any; recentQuestions: any[]; subjects: any[] }>("/api/home"),
 };

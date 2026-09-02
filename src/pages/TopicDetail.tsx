@@ -7,11 +7,13 @@ import QuestionItem from "@/components/QuestionItem";
 export default function TopicDetail() {
   const { id } = useParams<{ id: string }>();
   const [topic, setTopic] = useState<any>(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (id) api.topicById(id).then((d) => setTopic(d.topic)).catch(() => {});
+    if (id) api.topicById(id).then((d) => setTopic(d.topic)).catch(() => setError(true));
   }, [id]);
 
+  if (error) return <div className="card p-10 text-center text-rose-600">Failed to load topic. Is the server running?</div>;
   if (!topic) return <div className="card p-10 text-center text-slate-400">Loading…</div>;
 
   return (

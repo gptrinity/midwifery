@@ -1,8 +1,18 @@
 import { useState } from "react";
-import { Upload, Loader2, CheckCircle2 } from "lucide-react";
+import { Upload, Loader2, CheckCircle2, Trash2, Save } from "lucide-react";
 import { api } from "@/lib/api";
 
 type Subject = { id: string; name: string };
+
+type ParsedQ = {
+  text: string;
+  type: string;
+  options: string[];
+  correctIndex: number | null;
+  answer: string;
+  year: string;
+  subjectId: string | null;
+};
 
 export default function ImportForm({ subjects }: { subjects: Subject[] }) {
   const [title, setTitle] = useState("");
@@ -11,13 +21,27 @@ export default function ImportForm({ subjects }: { subjects: Subject[] }) {
   const [level, setLevel] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<null | { ok: boolean; error?: string; chars?: number; preview?: string; paper?: { title: string } }>(null);
+  const [result, setResult] = useState<null | {
+    ok: boolean;
+    error?: string;
+    chars?: number;
+    preview?: string;
+    paper?: { id: string; title: string };
+    parsedCount?: number;
+    parsedQuestions?: ParsedQ[];
+  }>(null);
+  const [questions, setQuestions] = useState<ParsedQ[]>([]);
+  const [paperId, setPaperId] = useState<string>("");
+  const [committing, setCommitting] = useState(false);
+  const [commitResult, setCommitResult] = useState<string>("");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!file) return;
     setLoading(true);
     setResult(null);
+    setQuestions([]);
+    setCommitResult("");
     const fd = new FormData();
     fd.append("file", file);
     fd.append("title", title);
@@ -29,11 +53,45 @@ export default function ImportForm({ subjects }: { subjects: Subject[] }) {
       setResult({ ...data, ok: true });
       if (data.ok) {
         setTitle(""); setYear(""); setLevel(""); setFile(null);
+        setQuestions(data.parsedQuestions || []);
+        setPaperId(data.paper.id);
       }
     } catch (e) {
       setResult({ ok: false, error: (e as Error).message });
     } finally {
       setLoading(false);
+    }
+  }
+
+  function updateQuestion(idx: number, field: keyof ParsedQ, value: any) {
+    setQuestions((prev) => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [field]: value };
+      return next;
+    });
+  }
+
+  function removeQuestion(idx: number) {
+    setQuestions((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  async function commitQuestions() {
+    if (!paperId || questions.length === 0) return;
+    setCommitting(true);
+    setCommitResult("");
+    try {
+      // Update each pending question on the server
+      for (let i = 0; i < questions.length; i++) {
+        await api.updatePendingQuestion(paperId, i, questions[i]);
+      }
+      const data = await api.commitPaper(paperId);
+      setCommitResult(`Successfully committed ${data.created} questions to the question bank!`);
+      setQuestions([]);
+      setPaperId("");
+    } catch (e) {
+      setCommitResult(`Error: ${(e as Error).message}`);
+    } finally {
+      setCommitting(false);
     }
   }
 
@@ -83,7 +141,7 @@ export default function ImportForm({ subjects }: { subjects: Subject[] }) {
           </div>
           <button className="btn-primary w-full justify-center" disabled={loading || !file}>
             {loading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
-            {loading ? "Extracting text…" : "Import paper"}
+            {loading ? "Extracting text..." : "Import & parse paper"}
           </button>
         </div>
       </form>
@@ -97,25 +155,88 @@ export default function ImportForm({ subjects }: { subjects: Subject[] }) {
             </div>
             {result.error && <p className="mt-1 text-sm text-rose-600">{result.error}</p>}
             {result.ok && result.chars !== undefined && (
-              <>
-                <p className="mt-1 text-sm text-slate-600">
-                  <strong>{result.paper?.title}</strong> · {result.chars.toLocaleString()} characters extracted.
-                </p>
-                <pre className="mt-3 max-h-64 overflow-y-auto whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
-                  {result.preview}
-                </pre>
-              </>
+              <p className="mt-1 text-sm text-slate-600">
+                <strong>{result.paper?.title}</strong> - {result.chars.toLocaleString()} characters extracted.
+                {result.parsedCount !== undefined && (
+                  <span className="ml-2 font-semibold text-brand-700">{result.parsedCount} MCQs auto-detected</span>
+                )}
+              </p>
             )}
           </div>
         )}
 
+        {commitResult && (
+          <div className={`card p-4 ${commitResult.startsWith("Error") ? "border-rose-200 text-rose-700" : "border-emerald-200 text-emerald-700"}`}>
+            {commitResult}
+          </div>
+        )}
+
+        {questions.length > 0 && (
+          <div className="card p-5">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-slate-900">Parsed Questions ({questions.length})</h3>
+              <button
+                className="btn-primary flex items-center gap-1"
+                onClick={commitQuestions}
+                disabled={committing}
+              >
+                {committing ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
+                {committing ? "Saving..." : `Commit ${questions.length} questions`}
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">Review and edit before committing to the question bank.</p>
+            <div className="mt-4 max-h-[500px] space-y-3 overflow-y-auto">
+              {questions.map((q, idx) => (
+                <div key={idx} className="rounded-xl border border-slate-200 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <input
+                        className="mb-2 w-full rounded-lg border border-slate-200 px-2 py-1 text-sm font-medium"
+                        value={q.text}
+                        onChange={(e) => updateQuestion(idx, "text", e.target.value)}
+                      />
+                      {q.options.map((opt, oi) => (
+                        <div key={oi} className="ml-2 flex items-center gap-1 text-xs">
+                          <span className="font-semibold text-slate-400">{String.fromCharCode(65 + oi)}.</span>
+                          <input
+                            className={`flex-1 rounded border px-1 py-0.5 ${
+                              q.correctIndex === oi ? "border-emerald-300 bg-emerald-50" : "border-slate-200"
+                            }`}
+                            value={opt}
+                            onChange={(e) => {
+                              const newOpts = [...q.options];
+                              newOpts[oi] = e.target.value;
+                              updateQuestion(idx, "options", newOpts);
+                            }}
+                          />
+                          <button
+                            className={`rounded px-1 text-xs font-bold ${
+                              q.correctIndex === oi ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-400"
+                            }`}
+                            onClick={() => updateQuestion(idx, "correctIndex", q.correctIndex === oi ? null : oi)}
+                          >
+                            {q.correctIndex === oi ? "OK" : "set"}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <button className="shrink-0 text-slate-400 hover:text-rose-600" onClick={() => removeQuestion(idx)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="card p-5 text-sm text-slate-600">
-          <h3 className="font-bold text-slate-900">Tips for good imports</h3>
+          <h3 className="font-bold text-slate-900">How it works</h3>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>Use the text-layer PDFs (digitally generated), not scanned images.</li>
-            <li>One paper per file works best for filtering by year.</li>
-            <li>Set subject + year to make the archive filterable.</li>
-            <li>After import, the paper appears instantly in the archive.</li>
+            <li>The parser auto-detects MCQs (numbered questions with A/B/C/D options).</li>
+            <li>It also detects answer keys at the bottom of the paper.</li>
+            <li>Review and correct any parsed questions before committing.</li>
+            <li>Committed questions are added to the question bank with source "past-paper".</li>
           </ul>
         </div>
       </div>

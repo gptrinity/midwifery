@@ -17,7 +17,6 @@ export default function Register() {
     try {
       await api.register(name, email, password);
       router("/");
-      window.location.reload();
     } catch (e: any) {
       setError(e?.message || "Network error. Please try again.");
     } finally {

@@ -90,6 +90,35 @@ export default function Home() {
         ))}
       </section>
 
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900">Browse the curriculum</h2>
+          <Link to="/subjects" className="text-sm font-semibold text-brand-600 hover:underline">
+            All subjects →
+          </Link>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {data.subjects.map((s: any) => (
+            <Link key={s.id} to={`/subjects/${s.slug}`} className="card group p-5 transition hover:-translate-y-0.5 hover:shadow-md">
+              <div className="flex items-center justify-between">
+                <span
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
+                  style={{ background: s.color }}
+                >
+                  <BookOpen size={18} />
+                </span>
+              </div>
+              <h3 className="mt-3 font-semibold text-slate-900">{s.name}</h3>
+              <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-500">{s.description}</p>
+              <div className="mt-3 flex gap-4 text-xs font-medium text-slate-400">
+                <span>{s._count.topics} topics</span>
+                <span>{s._count.questions} questions</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <section className="card p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900">Fresh questions to try</h2>

@@ -8,6 +8,8 @@
     "dev:client": "vite",
     "dev:server": "tsx watch server/index.ts",
     "build": "tsc -b && vite build",
+    "vercel-build": "prisma generate && vite build",
+    "postinstall": "prisma generate",
     "preview": "vite preview",
     "start": "node dist-server/index.js",
     "lint": "eslint .",
@@ -23,6 +25,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "jose": "^6.2.9",
@@ -37,6 +40,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.2",
     "@types/multer": "^1.4.12",

@@ -8,15 +8,16 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         String   @default("STUDENT") // STUDENT | ADMIN
-  createdAt    DateTime @default(now())
-  attempts     QuizAttempt[]
-  sessions     ChatSession[]
-  missed       MissedQuery[]
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  passwordHash  String
+  role          String         @default("STUDENT") // STUDENT | ADMIN
+  createdAt     DateTime       @default(now())
+  attempts      QuizAttempt[]
+  sessions      ChatSession[]
+  missed        MissedQuery[]
+  seenQuestions SeenQuestion[]
 }
 
 model Subject {
@@ -48,20 +49,21 @@ model Topic {
 }
 
 model Question {
-  id            String  @id @default(cuid())
+  id            String         @id @default(cuid())
   subjectId     String
-  subject       Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subject       Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   topicId       String
-  topic         Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topic         Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
   text          String
-  type          String  @default("MCQ") // MCQ | SHORT | ESSAY
-  level         String  @default("NEWBIE") // NEWBIE | INTERMEDIATE | ADVANCED | PROFESSIONAL
-  options       String  @default("[]") // JSON array for MCQ
+  type          String         @default("MCQ") // MCQ | SHORT | ESSAY
+  level         String         @default("NEWBIE") // NEWBIE | INTERMEDIATE | ADVANCED | PROFESSIONAL
+  options       String         @default("[]") // JSON array for MCQ
   correctIndex  Int? // index of correct option for MCQ
-  answer        String  @default("") // model answer / explanation
-  marks         Int     @default(2)
-  year          String  @default("")
-  source        String  @default("original")
+  answer        String         @default("") // model answer / explanation
+  marks         Int            @default(2)
+  year          String         @default("")
+  source        String         @default("original")
+  seenBy        SeenQuestion[]
 }
 
 model Paper {
@@ -127,4 +129,14 @@ model MissedQuery {
   status     String   @default("OPEN") // OPEN | RESOLVED | DISCARDED
   createdAt  DateTime @default(now())
   resolvedAt DateTime?
+}
+
+model SeenQuestion {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  @@unique([userId, questionId])
 }

@@ -14,6 +14,7 @@ const qPsych = require("./data/questions-psych");
 const qPsychAdv = require("./data/questions-psych-adv");
 const qInfant = require("./data/questions-infant");
 const qInfantAdv = require("./data/questions-infant-adv");
+const qNmcnPast = require("./data/questions-nmcn-past");
 
 // topic slug -> keywords (substring match, lower-cased)
 const TOPIC_KEYWORDS = {
@@ -164,9 +165,22 @@ async function main() {
     ["infant-care", [qInfant, qInfantAdv]],
   ];
 
+  // NMCN past questions are pre-categorized by subject in the data file
+  const nmcnFiles = [
+    ["foundation-of-midwifery", [qNmcnPast.filter((q) => q.text.toLowerCase().includes("nmcn") || q.text.toLowerCase().includes("council") || q.text.toLowerCase().includes("duty of care") || q.text.toLowerCase().includes("informed consent") || q.text.toLowerCase().includes("never event") || q.text.toLowerCase().includes("partograph") || q.text.toLowerCase().includes("breech") || q.text.toLowerCase().includes("true labor"))]],
+    ["applied-anatomy-physiology", [qNmcnPast.filter((q) => q.text.toLowerCase().includes("diameter") || q.text.toLowerCase().includes("blood volume") || q.text.toLowerCase().includes("progesterone") || q.text.toLowerCase().includes("foramen ovale") || q.text.toLowerCase().includes("fetal heart rate"))]],
+    ["normal-midwifery", [qNmcnPast.filter((q) => q.text.toLowerCase().includes("third stage") || q.text.toLowerCase().includes("engorgement") || q.text.toLowerCase().includes("second stage") || q.text.toLowerCase().includes("apgar") || q.text.toLowerCase().includes("breastfeeding") || q.text.toLowerCase().includes("lochia"))]],
+    ["complicated-midwifery", [qNmcnPast.filter((q) => q.text.toLowerCase().includes("postpartum haemorrhage") || q.text.toLowerCase().includes("pre-eclampsia") || q.text.toLowerCase().includes("placenta praevia") || q.text.toLowerCase().includes("shoulder dystocia") || q.text.toLowerCase().includes("helperr") || q.text.toLowerCase().includes("ectopic") || q.text.toLowerCase().includes("magnesium sulfate"))]],
+    ["community-midwifery", [qNmcnPast.filter((q) => q.text.toLowerCase().includes("alma-ata") || q.text.toLowerCase().includes("cold chain") || q.text.toLowerCase().includes("maternal mortality") || q.text.toLowerCase().includes("lam") || q.text.toLowerCase().includes("bcg") || q.text.toLowerCase().includes("three delays") || q.text.toLowerCase().includes("opv"))]],
+    ["psychology-in-midwifery", [qNmcnPast.filter((q) => q.text.toLowerCase().includes("edinburgh") || q.text.toLowerCase().includes("puerperal psychosis") || q.text.toLowerCase().includes("tokophobia") || q.text.toLowerCase().includes("continuous support") || q.text.toLowerCase().includes("baby blues"))]],
+    ["infant-care", [qNmcnPast.filter((q) => q.text.toLowerCase().includes("neonatal resuscitation") || q.text.toLowerCase().includes("exchange transfusion") || q.text.toLowerCase().includes("respiratory distress") || q.text.toLowerCase().includes("neonatal sepsis") || q.text.toLowerCase().includes("kangaroo") || q.text.toLowerCase().includes("vitamin k") || q.text.toLowerCase().includes("birth weight") || q.text.toLowerCase().includes("eye prophylaxis"))]],
+  ];
+
   let totalQuestions = 0;
 
-  for (const [subjectSlug, fileArrays] of questionFiles) {
+  const allFiles = [...questionFiles, ...nmcnFiles];
+
+  for (const [subjectSlug, fileArrays] of allFiles) {
     const subjectData = subjectsData.find((s) => s.slug === subjectSlug);
     if (!subjectData) {
       console.warn("Missing subject data for", subjectSlug);
@@ -217,7 +231,7 @@ async function main() {
             answer: q.answer || "",
             marks: q.marks || 2,
             year: q.year || "",
-            source: "original",
+            source: q.source || "original",
           },
         });
         subjectCount++;

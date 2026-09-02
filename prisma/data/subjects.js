@@ -7,6 +7,7 @@ module.exports = [
     name: "Foundation of Midwifery",
     icon: "shield",
     color: "#3b8c68",
+    order: 1,
     description:
       "The history, values, professional ethics, legal framework, communication and standards that form the bedrock of midwifery practice.",
     topics: [
@@ -80,6 +81,7 @@ module.exports = [
     name: "Applied Anatomy and Physiology",
     icon: "activity",
     color: "#2563eb",
+    order: 2,
     description:
       "The structure and function of the reproductive system, pelvis, and the physiological adaptations of pregnancy that midwives must master.",
     topics: [
@@ -153,6 +155,7 @@ module.exports = [
     name: "Normal Midwifery",
     icon: "heart",
     color: "#dc2626",
+    order: 3,
     description:
       "Antenatal, intranatal and postnatal care of the normal mother and newborn, from booking to breastfeeding.",
     topics: [
@@ -233,6 +236,7 @@ module.exports = [
     name: "Complicated Midwifery",
     icon: "alert",
     color: "#ea580c",
+    order: 4,
     description:
       "Recognition, management and referral of obstetric emergencies and complications across pregnancy, labor and puerperium.",
     topics: [
@@ -327,6 +331,7 @@ module.exports = [
     name: "Community Midwifery",
     icon: "home",
     color: "#16a34a",
+    order: 5,
     description:
       "Primary health care, maternal and child health services, family planning, immunization, epidemiology and community-based midwifery practice.",
     topics: [
@@ -393,6 +398,7 @@ module.exports = [
     name: "Psychology in Midwifery",
     icon: "brain",
     color: "#9333ea",
+    order: 6,
     description:
       "Psychological and emotional dimensions of pregnancy, labor, postnatal period, loss, attachment and mental health.",
     topics: [
@@ -466,6 +472,7 @@ module.exports = [
     name: "Infant Care / Newborn",
     icon: "baby",
     color: "#0d9488",
+    order: 7,
     description:
       "Care, assessment, resuscitation, feeding and management of the newborn and infant from birth through early life.",
     topics: [

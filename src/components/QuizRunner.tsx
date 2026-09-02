@@ -8,9 +8,10 @@ import { api } from "@/lib/api";
 type Props = {
   questions: QuizQuestion[];
   mode: "PRACTICE" | "EXAM";
+  remaining?: number;
 };
 
-export default function QuizRunner({ questions, mode }: Props) {
+export default function QuizRunner({ questions, mode, remaining }: Props) {
   const router = useNavigate();
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<(number | string | null)[]>(Array(questions.length).fill(null));
@@ -114,6 +115,7 @@ export default function QuizRunner({ questions, mode }: Props) {
         answers: JSON.stringify(
           questions.map((qq, i) => ({ qid: qq.id, answer: answers[i], selfMark: selfMarks[i] }))
         ),
+        questionIds: questions.map((qq) => qq.id),
       });
     } catch {
       // ignore save errors
@@ -156,6 +158,11 @@ export default function QuizRunner({ questions, mode }: Props) {
             </div>
           </div>
           <div className="mt-4 text-lg font-semibold text-slate-700">Grade: {grade}</div>
+          {remaining !== undefined && (
+            <p className="mt-2 text-sm text-slate-500">
+              {remaining > 0 ? `${remaining} unseen questions remaining in this pool` : "You've seen all questions — next session resets the pool"}
+            </p>
+          )}
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <button className="btn-primary" onClick={() => router("/practice")}>
               New practice session
@@ -222,7 +229,7 @@ export default function QuizRunner({ questions, mode }: Props) {
         <div className="flex items-center gap-2 text-sm">
           {mode === "EXAM" ? (
             <span className="rounded-full bg-amber-100 px-3 py-1 font-semibold text-amber-800">
-              ⏱ {formatDuration(examMinutes * 60 - elapsed)}
+              {formatDuration(examMinutes * 60 - elapsed)}
             </span>
           ) : (
             <span className="rounded-full bg-brand-100 px-3 py-1 font-semibold text-brand-800">Practice mode</span>
@@ -236,6 +243,11 @@ export default function QuizRunner({ questions, mode }: Props) {
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
               <Flag size={12} className="mr-1 inline" />
               {answers.filter((a) => a !== null).length} answered
+            </span>
+          )}
+          {remaining !== undefined && remaining > 0 && (
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+              {remaining} unseen left
             </span>
           )}
         </div>
@@ -291,7 +303,7 @@ export default function QuizRunner({ questions, mode }: Props) {
           <div className="mt-4">
             <textarea
               className="input min-h-[140px]"
-              placeholder="Type your answer here…"
+              placeholder="Type your answer here..."
               value={typeof answer === "string" ? answer : ""}
               onChange={(e) => setTextAnswer(e.target.value)}
             />

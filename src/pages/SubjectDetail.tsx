@@ -7,11 +7,13 @@ import { api } from "@/lib/api";
 export default function SubjectDetail() {
   const { slug } = useParams<{ slug: string }>();
   const [subject, setSubject] = useState<any>(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (slug) api.subjectBySlug(slug).then((d) => setSubject(d.subject)).catch(() => {});
+    if (slug) api.subjectBySlug(slug).then((d) => setSubject(d.subject)).catch(() => setError(true));
   }, [slug]);
 
+  if (error) return <div className="card p-10 text-center text-rose-600">Failed to load subject. Is the server running?</div>;
   if (!subject) return <div className="card p-10 text-center text-slate-400">Loading…</div>;
 
   const levelCounts: Record<string, number> = {};
